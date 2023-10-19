@@ -1,9 +1,18 @@
-first_final_state = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
-second_final_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+# depth = 4
 # first_list = [2, 5, 3, 1, 0, 6, 4, 7, 8]
-# first_list = [8, 6, 7, 2, 5, 4, 0, 3, 1]
-# first_list = [2, 7, 5, 0, 8, 4, 3, 1, 6]
-first_list = [1, 2, 3, 4, 5, 6, 7, 0, 8]
+
+# depth = 3
+# first_list = [1, 0, 2, 4, 5, 3, 7, 8, 6]
+
+# depth = 2
+# first_list = [1, 2, 0, 4, 5, 3, 7, 8, 6]
+
+# depth = 1
+first_list = [1, 2, 3, 4, 5, 0, 7, 8, 6]
+
+# depth = 0
+# first_list = [1, 2, 3, 4, 0, 5, 6, 7, 8]
+
 depth_limit = 10
 
 
@@ -28,7 +37,14 @@ def initialize(first_list):
 
 
 def final(current_state):
-    if current_state == first_final_state or current_state == second_final_state:
+    final_list = []
+    sorted_list = []
+    for index1 in range(0, len(current_state)):
+        for index2 in range(0, len(current_state[0])):
+            final_list.append(current_state[index1][index2])
+    final_list.remove(0)
+    sorted_list = sorted(final_list)
+    if sorted_list == final_list:
         return True
     return False
 
@@ -105,15 +121,15 @@ def right(current_state):
 
 
 def algorithm_iddfs(state, depth, maximum_depth, last_state):
-    print("At depth: -> " + str(depth))
     if state is None:
-        return None
-    if depth == maximum_depth:
         return None
     if final(state):
         print("SOLVED AT DEPTH: " + str(depth))
         print("FINAL STATE IS: " + str(list(state)))
         return True
+    print("At depth: -> " + str(depth))
+    if depth == maximum_depth:
+        return None
     if not equal(state, up(state)) and not equal(last_state, up(state)):
         if algorithm_iddfs(up(state), depth + 1, maximum_depth, state):
             return True
