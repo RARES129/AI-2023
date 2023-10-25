@@ -10,15 +10,15 @@ import time
 depth_limit = 4
 
 goal_states = [
-    [[1, 2, 3], [4, 5, 6], [7, 8, 0]],
-    [[1, 2, 3], [4, 5, 6], [7, 0, 8]],
-    [[1, 2, 3], [4, 5, 6], [0, 7, 8]],
-    [[1, 2, 3], [4, 5, 0], [6, 7, 8]],
-    [[1, 2, 3], [4, 0, 5], [6, 7, 8]],
-    [[1, 2, 3], [0, 4, 5], [6, 7, 8]],
-    [[1, 2, 0], [3, 4, 5], [6, 7, 8]],
-    [[1, 0, 2], [3, 4, 5], [6, 7, 8]],
-    [[0, 1, 2], [3, 4, 5], [6, 7, 8]],
+    [1, 2, 3, 4, 5, 6, 7, 8, 0],
+    [1, 2, 3, 4, 5, 6, 7, 0, 8],
+    [1, 2, 3, 4, 5, 6, 0, 7, 8],
+    [1, 2, 3, 4, 5, 0, 6, 7, 8],
+    [1, 2, 3, 4, 0, 5, 6, 7, 8],
+    [1, 2, 3, 0, 4, 5, 6, 7, 8],
+    [1, 2, 0, 3, 4, 5, 6, 7, 8],
+    [1, 0, 2, 3, 4, 5, 6, 7, 8],
+    [0, 1, 2, 3, 4, 5, 6, 7, 8],
 ]
 
 
@@ -127,7 +127,7 @@ def manhattan_distance(current_state, goal_state):
     for i in range(3):
         for j in range(3):
             if current_state[i][j] != 0:
-                x_goal, y_goal = divmod(current_state[i][j] - 1, 3)
+                x_goal, y_goal = divmod(goal_state.index(current_state[i][j]), 3)
                 x_current, y_current = i, j
                 x_distance = abs(x_goal - x_current)
                 y_distance = abs(y_goal - y_current)
@@ -136,6 +136,7 @@ def manhattan_distance(current_state, goal_state):
 
 
 def hamming_distance(current_state, goal_state):
+    goal_state = [goal_state[i : i + 3] for i in range(0, len(goal_state), 3)]
     distance = 0
     for i in range(3):
         for j in range(3):
@@ -149,7 +150,7 @@ def chebyshev_distance(current_state, goal_state):
     for i in range(3):
         for j in range(3):
             if current_state[i][j] != 0:
-                x_goal, y_goal = divmod(current_state[i][j] - 1, 3)
+                x_goal, y_goal = divmod(goal_state.index(current_state[i][j]), 3)
                 x_current, y_current = i, j
                 x_distance = abs(x_goal - x_current)
                 y_distance = abs(y_goal - y_current)
