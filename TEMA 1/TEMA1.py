@@ -1,19 +1,25 @@
-# depth = 4
+import time
+
+# first_list = [8, 6, 7, 2, 5, 4, 0, 3, 1]
+
 # first_list = [2, 5, 3, 1, 0, 6, 4, 7, 8]
 
-# depth = 3
-# first_list = [1, 0, 2, 4, 5, 3, 7, 8, 6]
+# first_list = [2, 7, 5, 0, 8, 4, 3, 1, 6]
 
-# depth = 2
-# first_list = [1, 2, 0, 4, 5, 3, 7, 8, 6]
 
-# depth = 1
-# first_list = [1, 2, 3, 4, 5, 0, 7, 8, 6]
+depth_limit = 4
 
-# depth = 0
-# first_list = [1, 2, 3, 4, 0, 5, 6, 7, 8]
-
-depth_limit = 10
+goal_states = [
+    [[1, 2, 3], [4, 5, 6], [7, 8, 0]],
+    [[1, 2, 3], [4, 5, 6], [7, 0, 8]],
+    [[1, 2, 3], [4, 5, 6], [0, 7, 8]],
+    [[1, 2, 3], [4, 5, 0], [6, 7, 8]],
+    [[1, 2, 3], [4, 0, 5], [6, 7, 8]],
+    [[1, 2, 3], [0, 4, 5], [6, 7, 8]],
+    [[1, 2, 0], [3, 4, 5], [6, 7, 8]],
+    [[1, 0, 2], [3, 4, 5], [6, 7, 8]],
+    [[0, 1, 2], [3, 4, 5], [6, 7, 8]],
+]
 
 
 def duplicate_matrix(matrix):
@@ -116,55 +122,113 @@ def right(current_state):
     return None
 
 
-def algorithm_iddfs(state, depth, maximum_depth, last_state):
-    print("At depth: -> " + str(depth))
-    if state is None:
-        return None
-    if final(state):
-        print("SOLVED AT DEPTH: " + str(depth))
-        print("FINAL STATE IS: " + str(list(state)))
-        return True
-    if depth == maximum_depth:
-        return None
-    if (
-        not equal(state, up(state))
-        and not equal(last_state, up(state))
-        and up(state) is not None
-    ):
-        print("Move UP")
-        if algorithm_iddfs(up(state), depth + 1, maximum_depth, state):
-            return True
-    if (
-        not equal(state, left(state))
-        and not equal(last_state, left(state))
-        and left(state) is not None
-    ):
-        print("Move LEFT")
-        if algorithm_iddfs(left(state), depth + 1, maximum_depth, state):
-            return True
-    if (
-        not equal(state, right(state))
-        and not equal(last_state, right(state))
-        and right(state) is not None
-    ):
-        print("Move RIGHT")
-        if algorithm_iddfs(right(state), depth + 1, maximum_depth, state):
-            return True
-    if (
-        not equal(state, down(state))
-        and not equal(last_state, down(state))
-        and down(state) is not None
-    ):
-        print("Move DOWN")
-        if algorithm_iddfs(down(state), depth + 1, maximum_depth, state):
-            return True
+def manhattan_distance(current_state, goal_state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            if current_state[i][j] != 0:
+                x_goal, y_goal = divmod(current_state[i][j] - 1, 3)
+                x_current, y_current = i, j
+                x_distance = abs(x_goal - x_current)
+                y_distance = abs(y_goal - y_current)
+                distance += x_distance + y_distance
+    return distance
+
+
+def hamming_distance(current_state, goal_state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            if current_state[i][j] != goal_state[i][j]:
+                distance += 1
+    return distance
+
+
+def chebyshev_distance(current_state, goal_state):
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            if current_state[i][j] != 0:
+                x_goal, y_goal = divmod(current_state[i][j] - 1, 3)
+                x_current, y_current = i, j
+                x_distance = abs(x_goal - x_current)
+                y_distance = abs(y_goal - y_current)
+                distance = max(distance, max(x_distance, y_distance))
+    return distance
+
+
+def best_distance(current_state, tipe):
+    min_distance = float("inf")
+    for goal_state in goal_states:
+        if tipe == "HAMMING":
+            distance = hamming_distance(current_state, goal_state)
+        elif tipe == "MANHATTAN":
+            distance = manhattan_distance(current_state, goal_state)
+        elif tipe == "CHEBYSHEV":
+            distance = chebyshev_distance(current_state, goal_state)
+        if distance < min_distance:
+            min_distance = distance
+    return min_distance
+
+
+def greedy(current_state, tipe):
+    start_time = time.time()
+    visited_states = set()
+    count = 0
+    queue = [(current_state, 0)]
+    while queue:
+        state = queue.pop(0)[0]
+        if final(state):
+            end_time = time.time()
+            total_time = end_time - start_time
+            print("\n", tipe, ": ", state, sep="")
+            print("Moves: ", count)
+            print("Time: ", total_time)
+            return state, count, total_time
+        visited_states.add(str(state))
+        for move in [up, down, left, right]:
+            new_state = move(state)
+            if new_state is not None and str(new_state) not in visited_states:
+                queue.append((new_state, best_distance(new_state, tipe)))
+                count += 1
+        queue.sort(key=lambda x: x[1])
+    print(tipe, "No solution found :(")
+    return None
+
+
+def iddfs(current_state):
+    start_time = time.time()
+    count = 0
+    for depth in range(1, depth_limit + 1):
+        visited_states = set()
+        stack = [(current_state, 0)]
+        while stack:
+            state, current_depth = stack.pop()
+            if final(state):
+                end_time = time.time()
+                total_time = end_time - start_time
+                print("\nIDDFS: ", state, sep="")
+                print("Moves: ", count)
+                print("Time: ", total_time)
+                return state, count, total_time
+            if current_depth == depth:
+                continue
+            visited_states.add(str(state))
+            for move in [up, down, left, right]:
+                new_state = move(state)
+                if new_state is not None and str(new_state) not in visited_states:
+                    stack.append((new_state, current_depth + 1))
+                    count += 1
+    print("IDDFS: No solution found :(")
+    return None
 
 
 def main():
     first_state = initialize(first_list)
-    for index1 in range(0, depth_limit):
-        if algorithm_iddfs(first_state, 0, index1, None):
-            break
+    iddfs(first_state)
+    greedy(first_state, "HAMMING")
+    greedy(first_state, "MANHATTAN")
+    greedy(first_state, "CHEBYSHEV")
 
 
 main()
