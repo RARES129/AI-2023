@@ -192,7 +192,11 @@ def greedy(current_state, tipe):
                 queue.append((new_state, best_distance(new_state, tipe)))
                 count += 1
         queue.sort(key=lambda x: x[1])
+    end_time = time.time()
+    total_time = end_time - start_time
     print(tipe, "No solution found :(")
+    print("Moves: ", count)
+    print("Time: ", total_time)
     return None
 
 
@@ -219,7 +223,12 @@ def iddfs(current_state):
                 if new_state is not None and str(new_state) not in visited_states:
                     stack.append((new_state, current_depth + 1))
                     count += 1
-    print("IDDFS: No solution found :(")
+
+    end_time = time.time()
+    total_time = end_time - start_time
+    print("\nIDDFS: No solution found :(", sep="")
+    print("Moves: ", count)
+    print("Time: ", total_time)
     return None
 
 
