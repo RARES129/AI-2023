@@ -4,10 +4,10 @@ import time
 
 # first_list = [2, 5, 3, 1, 0, 6, 4, 7, 8]
 
-# first_list = [2, 7, 5, 0, 8, 4, 3, 1, 6]
+first_list = [2, 7, 5, 0, 8, 4, 3, 1, 6]
 
 
-depth_limit = 4
+depth_limit = 25
 
 goal_states = [
     [1, 2, 3, 4, 5, 6, 7, 8, 0],
@@ -178,6 +178,7 @@ def greedy(current_state, tipe):
     count = 0
     queue = [(current_state, 0)]
     while queue:
+        count += 1
         state = queue.pop(0)[0]
         if final(state):
             end_time = time.time()
@@ -191,7 +192,7 @@ def greedy(current_state, tipe):
             new_state = move(state)
             if new_state is not None and str(new_state) not in visited_states:
                 queue.append((new_state, best_distance(new_state, tipe)))
-                count += 1
+
         queue.sort(key=lambda x: x[1])
     end_time = time.time()
     total_time = end_time - start_time
