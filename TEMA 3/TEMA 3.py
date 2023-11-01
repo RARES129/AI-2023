@@ -2,31 +2,31 @@ import copy
 
 
 def get_empty_cells(board):
-    empty_cells = []
-    for i in range(9):
-        for j in range(9):
-            if board[i][j] == 0 or board[i][j] == -1:
-                empty_cells.append((i, j))
-    return empty_cells
+    cells = []
+    for index1 in range(9):
+        for index2 in range(9):
+            if board[index1][index2] == 0 or board[index1][index2] == -1:
+                cells.append((index1, index2))
+    return cells
 
 
-def get_possible_values(board, row, col):
-    values = set(range(1, 10))
+def get_domain(board, row, col):
+    domain = set(range(1, 10))
     if board[row][col] == -1:
-        values = [2, 4, 6, 8]
-    for j in range(9):
-        if board[row][j] in values:
-            values.remove(board[row][j])
+        domain = [2, 4, 6, 8]
+    for index in range(9):
+        if board[row][index] in domain:
+            domain.remove(board[row][index])
     for i in range(9):
-        if board[i][col] in values:
-            values.remove(board[i][col])
+        if board[index][col] in domain:
+            domain.remove(board[index][col])
     box_row = (row // 3) * 3
     box_col = (col // 3) * 3
-    for i in range(box_row, box_row + 3):
-        for j in range(box_col, box_col + 3):
-            if board[i][j] in values:
-                values.remove(board[i][j])
-    return list(values)
+    for index1 in range(box_row, box_row + 3):
+        for index2 in range(box_col, box_col + 3):
+            if board[index1][index2] in domain:
+                domain.remove(board[index1][index2])
+    return list(domain)
 
 
 def forward_checking(board, empty_cells, domain):
@@ -76,6 +76,7 @@ def solve_sudoku(board, empty_cells, domain):
             result = solve_sudoku(new_board, new_empty_cells, new_domain)
             if result:
                 return result
+    print("NU EXISTA SOLUTIE, MECI MAI PROST :((")
     return None
 
 
@@ -94,14 +95,12 @@ def main():
     empty_cells = get_empty_cells(board)
     domain = {}
     for cell in empty_cells:
-        domain[cell] = get_possible_values(board, cell[0], cell[1])
+        domain[cell] = get_domain(board, cell[0], cell[1])
 
     board_final = solve_sudoku(board, empty_cells, domain)
     if board_final:
         for row in board_final:
             print(row)
-    else:
-        print("Nu exista solutie")
 
 
 main()
