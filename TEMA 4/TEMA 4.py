@@ -119,7 +119,6 @@ def minimax(state, depth, player):
         else:
             if score[2] < best[2]:
                 best = score
-
     return best
 
 
