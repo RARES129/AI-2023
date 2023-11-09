@@ -106,18 +106,23 @@ def minimax(state, depth, player):
         score = evaluate(state)
         return [-1, -1, score]
 
-    for cell in empty_cells(state):
-        x, y = cell[0], cell[1]
-        state[x][y] = player
-        score = minimax(state, depth - 1, -player)
-        state[x][y] = 0
-        score[0], score[1] = x, y
-
-        if player == COMP:
-            if score[2] > best[2]:
+    if player == COMP:
+        for cell in empty_cells(state):
+            x, y = cell[0], cell[1]
+            state[x][y] = player
+            score = minimax(state, depth - 1, -player)
+            state[x][y] = 0
+            score[0], score[1] = x, y
+            if best[2] <= score[2]:
                 best = score
-        else:
-            if score[2] < best[2]:
+    else:
+        for cell in empty_cells(state):
+            x, y = cell[0], cell[1]
+            state[x][y] = player
+            score = minimax(state, depth - 1, player)
+            state[x][y] = 0
+            score[0], score[1] = x, y
+            if best[2] >= score[2]:
                 best = score
     return best
 
