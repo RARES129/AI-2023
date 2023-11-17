@@ -1,47 +1,36 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
 import numpy as np
-import matplotlib.pyplot as plt
 
-# citirea datelor
 data = np.loadtxt("seeds_dataset.txt")
 np.random.shuffle(data)
 features = data[:, :7]
 labels = data[:, 7:].flatten()
 
-# normalizarea datelor
-features = (features - features.mean(axis=0)) / features.std(axis=0)
+min_val = np.min(features, axis=0)
+max_val = np.max(features, axis=0)
+features = (features - min_val) / (max_val - min_val)
 
-# crearea seturilor de date de antrenare si de testare 80% 20%
-train_features = torch.tensor(features[: int(len(features) * 0.8)], dtype=torch.float32)
-test_features = torch.tensor(features[int(len(features) * 0.8) :], dtype=torch.float32)
-train_labels = torch.tensor(labels[: int(len(labels) * 0.8)] - 1, dtype=torch.long)
-test_labels = torch.tensor(labels[int(len(labels) * 0.8) :] - 1, dtype=torch.long)
+train_features = features[: int(len(features) * 0.8)].astype(np.float32)
+test_features = features[int(len(features) * 0.8) :].astype(np.float32)
+train_labels = (labels[: int(len(labels) * 0.8)] - 1).astype(np.float32)
+test_labels = (labels[int(len(labels) * 0.8) :] - 1).astype(np.float32)
 
 
-# definirea modelului
-class NeuralNet(nn.Module):
+class NeuralNet:
     def __init__(self, input_size, hidden_size1, hidden_size2, output_size):
-        super(NeuralNet, self).__init__()
-        self.hidden1 = nn.Linear(input_size, hidden_size1)
-        self.hidden2 = nn.Linear(hidden_size1, hidden_size2)
-        self.relu = nn.ReLU()
-        self.output = nn.Linear(hidden_size2, output_size)
-        self.softmax = nn.Softmax(dim=1)
+        self.hidden1 = np.random.randn(input_size, hidden_size1)
+        self.hidden2 = np.random.randn(hidden_size1, hidden_size2)
+        self.output = np.random.randn(hidden_size2, output_size)
 
-    # forward propagation
     def forward(self, x):
-        x = self.hidden1(x)  # first hidden layer
-        x = self.relu(x)  # reLU for first hidden layer
-        x = self.hidden2(x)  # second hidden layer
-        x = self.relu(x)  # reLU for second hidden layer
-        x = self.output(x)
-        x = self.softmax(x)  # softmax for output
+        x = np.dot(x, self.hidden1)
+        x = relu(x)
+        x = np.dot(x, self.hidden2)
+        x = relu(x)
+        x = np.dot(x, self.output)
+        x = softmax(x)
         return x
 
 
-# initializarea parametrilor
 input_size = 7
 hidden_size1 = 5
 hidden_size2 = 5
@@ -50,140 +39,54 @@ learning_rate = 0.01
 epochs = 100
 
 
-# crearea unei instante a modelului + initializarea parametrilor
-model = NeuralNet(input_size, hidden_size1, hidden_size2, output_size)
-
-# definirea functiei de pierdere si a optimizatorului
-loss_fn = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), learning_rate)
-
-# Keep track of errors on training and testing sets
-train_errors = []
-test_errors = []
-
-# antrenarea modelului
-for epoch in range(epochs):
-    # forward pass
-    output = model(train_features)
-    loss = loss_fn(output, train_labels)
-
-    # backpropagation si optimizare
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-
-    # Compute error on training set
-    train_errors.append(loss.item())
-
-    # Compute error on testing set
-    test_output = model(test_features)
-    test_loss = loss_fn(test_output, test_labels)
-    test_errors.append(test_loss.item())
-
-# Plot errors as a function of epochs
-plt.figure(figsize=(10, 5))
-plt.plot(train_errors, label="Training error")
-plt.plot(test_errors, label="Testing error")
-plt.xlabel("Epoch")
-plt.ylabel("Error")
-plt.legend()
-plt.show()
+def relu(x):
+    return np.maximum(0, x)
 
 
-# testarea modelului
-test_output = model(test_features)
-_, predicted = torch.max(test_output, 1)
-
-# Compute accuracy
-accuracy = (predicted == test_labels).sum().item() / len(test_labels)
-print("accuracy:", accuracy)
-
-# misclassified points
-misclassified_indices = (predicted != test_labels).nonzero(as_tuple=True)[0]
-misclassified_features = test_features[misclassified_indices]
-misclassified_labels = test_labels[misclassified_indices]
-misclassified_predictions = predicted[misclassified_indices]
-
-for i in range(len(misclassified_indices)):
-    print(
-        f"Point {misclassified_indices[i]}: true label = {misclassified_labels[i]}, predicted label = {misclassified_predictions[i]}"
-    )
-    print(f"Features: {misclassified_features[i]}")
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 
-# 80% training 20% testing
-with open("results.txt", "w") as f:
-    for i in range(len(test_labels)):
-        f.write(
-            f"exemplul {i+1}: clasa reala = {test_labels[i]}, clasa prezisa = {predicted[i]}\n"
-        )
+def softmax(x):
+    e_x = np.exp(x - np.max(x))
+    return e_x / np.sum(e_x, axis=1, keepdims=True)
 
-# Manual forward propagation
-hidden_weights1 = np.random.randn(input_size, hidden_size1)
-hidden_bias1 = np.zeros(hidden_size1)
-hidden_weights2 = np.random.randn(hidden_size1, hidden_size2)
-hidden_bias2 = np.zeros(hidden_size2)
-output_weights = np.random.randn(hidden_size2, output_size)
-output_bias = np.zeros(output_size)
 
-# Forward pass for the first hidden layer
-hidden_output1 = np.dot(test_features, hidden_weights1) + hidden_bias1
-hidden_activation1 = np.maximum(hidden_output1, 0)  # ReLU
+def relu_derivative(x):
+    return np.where(x > 0, 1, 0)
 
-# Forward pass for the second hidden layer
-hidden_output2 = np.dot(hidden_activation1, hidden_weights2) + hidden_bias2
-hidden_activation2 = np.maximum(hidden_output2, 0)  # ReLU
 
-# Forward pass for the output layer
-output = np.dot(hidden_activation2, output_weights) + output_bias
-exp_scores = np.exp(output)
-output_probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)  # Softmax
+def sigmoid_derivative(x):
+    return sigmoid(x) * (1 - sigmoid(x))
 
-# Manual backpropagation
-probs = output_probs[np.arange(len(test_labels)), test_labels]
-loss = -np.log(probs).mean()  # Cross-entropy loss
 
-# Backpropagation for the output layer
-grad_output = output_probs.copy()
-grad_output[np.arange(len(test_labels)), test_labels] -= 1
-grad_output /= len(test_labels)
+def softmax_derivative(x):
+    p = softmax(x)
+    return p * (1 - p)
 
-output_weights_grad = np.dot(hidden_activation2.T, grad_output)
-output_bias_grad = np.sum(grad_output, axis=0)
 
-# Backpropagation for the second hidden layer
-grad_hidden2 = np.dot(grad_output, output_weights.T)
-grad_hidden2[hidden_output2 <= 0] = 0
+def cross_entropy_loss(y_true, y_pred):
+    m = y_true.shape[0]
+    log_likelihood = -np.log(y_pred[range(m), y_true])
+    loss = np.sum(log_likelihood) / m
+    return loss
 
-hidden_weights2_grad = np.dot(hidden_activation1.T, grad_hidden2)
-hidden_bias2_grad = np.sum(grad_hidden2, axis=0)
 
-# Backpropagation for the first hidden layer
-grad_hidden1 = np.dot(grad_hidden2, hidden_weights2.T)
-grad_hidden1[hidden_output1 <= 0] = 0
+def main():
+    model = NeuralNet(input_size, hidden_size1, hidden_size2, output_size)
 
-hidden_weights1_grad = np.dot(test_features.T, grad_hidden1)
-hidden_bias1_grad = np.sum(grad_hidden1, axis=0)
+    test_input = np.random.randn(1, input_size)
+    print("Input Data:", test_input)
 
-# Update weights manually
-learning_rate = 0.01
-hidden_weights1 -= learning_rate * hidden_weights1_grad
-hidden_bias1 -= learning_rate * hidden_bias1_grad
-hidden_weights2 -= learning_rate * hidden_weights2_grad
-hidden_bias2 -= learning_rate * hidden_bias2_grad
-output_weights -= learning_rate * output_weights_grad
-output_bias -= learning_rate * output_bias_grad
+    predicted_output = model.forward(test_input)
 
-# Print updated weights for demonstration
-print("Updated Weights - First Hidden Layer:")
-print(hidden_weights1)
-print("Updated Bias - First Hidden Layer:")
-print(hidden_bias1)
-print("Updated Weights - Second Hidden Layer:")
-print(hidden_weights2)
-print("Updated Bias - Second Hidden Layer:")
-print(hidden_bias2)
-print("Updated Weights - Output Layer:")
-print(output_weights)
-print("Updated Bias - Output Layer:")
-print(output_bias)
+    predicted_class = np.argmax(predicted_output) + 1
+
+    print("Predicted Class Label:", predicted_class)
+
+    # Calculate the loss
+    loss = cross_entropy_loss(np.array([predicted_class - 1]), predicted_output)
+    print("Loss:", loss)
+
+
+main()
