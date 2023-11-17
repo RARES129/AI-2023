@@ -84,7 +84,6 @@ def main():
 
     print("Predicted Class Label:", predicted_class)
 
-    # Calculate the loss
     loss = cross_entropy_loss(np.array([predicted_class - 1]), predicted_output)
     print("Loss:", loss)
 
